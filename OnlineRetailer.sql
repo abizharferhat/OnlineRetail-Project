@@ -78,81 +78,19 @@ UPDATE online_retail_new1
 SET Quantity = REPLACE(Quantity, '-', '')
 WHERE Quantity LIKE '-%';
 
-
-SELECT *
-FROM online_retail_new1
-WHERE UnitPrice = '-11062.06';
-
-
 SELECT *
 FROM online_retail_new1
 WHERE CustomerID IS NULL;
-
-UPDATE online_retail_new1
-SET CustomerID = '0'
-WHERE CustomerID IS NULL;
-
-SELECT *
-FROM online_retail_new1
-WHERE CustomerID = '0';
 
 DELETE FROM online_retail_new1
-WHERE CustomerID  = '0'
+WHERE CustomerID IS NULL;
+
 
 
 -- Customer Segmentation
 
----RFM Analysis
-WITH RFMData AS (
-    SELECT
-        CustomerID,
-        MAX(InvoiceDate) AS last_purchase_date,
-        COUNT(DISTINCT InvoiceNo) AS frequency,
-        SUM(Quantity * UnitPrice) AS monetary_value
-    FROM
-        online_retail_new1
-    GROUP BY
-        CustomerID
-)
 
---- Normalizing RFM values (optional)
-, NormalizedRFM AS (
-    SELECT
-        CustomerID,
-        last_purchase_date,
-        frequency,
-        monetary_value,
-        PERCENT_RANK() OVER (ORDER BY last_purchase_date) AS recency_rank,
-        PERCENT_RANK() OVER (ORDER BY frequency DESC) AS frequency_rank,
-        PERCENT_RANK() OVER (ORDER BY monetary_value DESC) AS monetary_value_rank
-    FROM
-        RFMData
-)
-
---- Clustering based on normalized RFM values
-, ClusteredCustomers AS (
-    SELECT
-        CustomerID,
-        last_purchase_date,
-        frequency,
-        monetary_value,
-        NTILE(4) OVER (ORDER BY recency_rank, frequency_rank, monetary_value_rank) AS cluster_label
-    FROM
-        NormalizedRFM
-)
-
-
---- Final result with customer segments
-SELECT
-    CustomerID,
-    last_purchase_date,
-    frequency,
-    monetary_value,
-    cluster_label
-FROM
-    ClusteredCustomers;
-
---- another thing 
+--- RFM Analysis
 
 WITH RFMData11 AS (
     SELECT
@@ -216,8 +154,7 @@ FROM
 GROUP BY
     CustomerID
 ORDER BY
-    Monetary DESC;  -- You can choose any RFM score for ordering
-
+    Monetary DESC;  
 
 
 -- PRODUCT Analysis
@@ -253,7 +190,7 @@ ORDER BY
 
 --- Geographical Analysis
 
--- 
+--- Total Sales Revenue By Country
 SELECT
     Country,
     SUM(Quantity) AS TotalUnitsSold,
@@ -265,7 +202,7 @@ GROUP BY
 ORDER BY
     TotalSalesRevenue DESC
 
-
+--- Average of Unit Price And Quantity
 SELECT
     Country,
     AVG(UnitPrice) AS AverageUnitPrice,
@@ -288,8 +225,6 @@ ORDER BY hoursofday
 
 -- 2. Analyze Sales by Time of the week:
 
-
-
 SELECT
     DATENAME(WEEKDAY, InvoiceDate) AS DayOfWeek,
     SUM(Quantity * UnitPrice) AS TotalSales
@@ -309,7 +244,6 @@ ORDER BY
     END;
 
 -- 3. Analyze Sales by Time of the month
-
 
 SELECT
 	Month(InvoiceDate) AS Months,
